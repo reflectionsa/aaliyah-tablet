@@ -1,10 +1,13 @@
-// Aaliyah's tablet mod, step 1: LOOK before we paint.
-// When the game loads a screen ("canvas"), we write a list of its pieces to the log. We only
-// look; we change nothing. Needs two things first (see the notes with this file):
-//   1. echo-mod.json: capabilities must be ["hooks-engine"] on its own (the template refuses "observes-only" together with another one)
+// Aaliyah's tablet mod, step 2: PAINT the tablet.
+// When the game loads a screen ("canvas"), we write a list of its pieces to the log (step 1).
+// When the screen is the tablet, we then set its coloured box (a "panel", type 2) to the colour
+// from the launcher option "tablet_color" (a hex string like #2ad4d4). Needs two things first:
+//   1. echo-mod.json: "capabilities": ["cosmetic", "hooks-engine"]  ("observes-only" must stand alone)
 //   2. the build must have ECHO_MOD_MINHOOK=ON (CMakeLists.txt: option(ECHO_MOD_MINHOOK ... ON))
 #include <windows.h>
 
+#include <cctype>
+#include <cstdlib>
 #include <cstring>
 
 #include "hooks.h"
@@ -55,6 +58,25 @@ constexpr unsigned kTabletElementCount = 0;
 // Max pieces we will print (so a bad guess can't flood the log).
 constexpr unsigned kMaxPrint = 400;
 
+// The colour Aaliyah picked (red, green, blue, each 0 to 1). The alpha (see-through amount) is NOT
+// part of the choice: we keep whatever the game had (step-1 log: 0.500 for the tablet's panel).
+float g_rgb[3] = {0, 0, 0};
+bool g_haveColor = false;
+
+// "#rrggbb" (the # is optional) -> three numbers from 0 to 1. False if it is not exactly 6 hex digits.
+bool ParseHexColor(const std::string& text, float* rgb) {
+    size_t start = (!text.empty() && text[0] == '#') ? 1 : 0;
+    if (text.size() - start != 6) return false;
+    for (size_t i = start; i < text.size(); i++) {
+        if (!isxdigit(static_cast<unsigned char>(text[i]))) return false;
+    }
+    unsigned long v = strtoul(text.c_str() + start, nullptr, 16);
+    rgb[0] = ((v >> 16) & 0xff) / 255.0f;
+    rgb[1] = ((v >> 8) & 0xff) / 255.0f;
+    rgb[2] = (v & 0xff) / 255.0f;
+    return true;
+}
+
 // ---- safe reading of game memory (a wrong guess must not crash the game) ----
 
 bool Readable(const void* p, size_t n) {
@@ -73,9 +95,26 @@ bool Read(const void* base, size_t offset, T* out) {
     return true;
 }
 
+// Only write where the memory really is writable (a wrong guess must not crash the game).
+bool Writable(void* p, size_t n) {
+    MEMORY_BASIC_INFORMATION info;
+    if (!p || !VirtualQuery(p, &info, sizeof(info)) || info.State != MEM_COMMIT) return false;
+    if (!(info.Protect & (PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY))) return false;
+    if (info.Protect & PAGE_GUARD) return false;
+    return static_cast<uint8_t*>(p) + n <= static_cast<uint8_t*>(info.BaseAddress) + info.RegionSize;
+}
+
+// Does this look like a colour? All four numbers from 0 to 1 (a name hash read as floats almost never does).
+bool LooksLikeColor(const float* c) {
+    for (int i = 0; i < 4; i++) {
+        if (!(c[i] >= 0.0f && c[i] <= 1.0f)) return false;  // also false for "not a number"
+    }
+    return true;
+}
+
 // ---- the list ----
 
-void DumpCanvas(unsigned count, const uint8_t* elements) {
+void DumpCanvas(unsigned count, uint8_t* elements) {
     Log("TABLET FOUND: %u pieces", count);
     for (unsigned i = 0; i < count && i < kMaxPrint; i++) {
         const uint8_t* e = elements + static_cast<size_t>(i) * kElementSize;
@@ -94,6 +133,22 @@ void DumpCanvas(unsigned count, const uint8_t* elements) {
             Log("piece %u: type %u, colour %.3f %.3f %.3f %.3f%s", i, type, c[0], c[1], c[2], c[3],
                 type == 2 ? "" : "  (only panels, type 2, are sure to use these as a colour)");
         }
+
+        // STEP 2: paint. Only a panel (type 2) whose four numbers look like a colour. In the step-1
+        // log the tablet has exactly one: piece 6.
+        if (g_haveColor && type == 2) {
+            uint8_t* at = elements + static_cast<size_t>(i) * kElementSize + kElementColor;
+            if (!LooksLikeColor(c)) {
+                Log("piece %u: not painted, the numbers do not look like a colour", i);
+            } else if (!Writable(at, sizeof(float) * 4)) {
+                Log("piece %u: not painted, the memory is not writable", i);
+            } else {
+                float painted[4] = {g_rgb[0], g_rgb[1], g_rgb[2], c[3]};  // keep the old alpha
+                memcpy(at, painted, sizeof(painted));
+                Log("piece %u: PAINTED before %.3f %.3f %.3f %.3f -> after %.3f %.3f %.3f %.3f", i, c[0], c[1], c[2],
+                    c[3], painted[0], painted[1], painted[2], painted[3]);
+            }
+        }
     }
 }
 
@@ -106,7 +161,7 @@ uint64_t OnLoadedDetour(void* self, uint64_t a, uint64_t b, uint64_t c) {
 
     const uint8_t* instance = static_cast<const uint8_t*>(self);
     const uint8_t* resource = nullptr;
-    const uint8_t* elements = nullptr;
+    uint8_t* elements = nullptr;
     uint64_t count = 0;
     uint64_t name = 0;
     uint64_t type = 0;
@@ -131,6 +186,15 @@ uint64_t OnLoadedDetour(void* self, uint64_t a, uint64_t b, uint64_t c) {
 }  // namespace
 
 bool Start(const NvrGameContext*) {
+    // The colour from the launcher: tablet_color, like "#2ad4d4". Log what we made of it, never more.
+    std::string text = Arg("tablet_color", "#2ad4d4");
+    g_haveColor = ParseHexColor(text, g_rgb);
+    if (g_haveColor) {
+        Log("tablet colour: %.3f %.3f %.3f", g_rgb[0], g_rgb[1], g_rgb[2]);
+    } else {
+        Warn("tablet_color is not like #rrggbb: the tablet keeps its own colour");
+    }
+
     // Hooks may only be set up here in Start (hooks.h:3-9). Hook() checks the 16 bytes first.
     if (!hooks::Hook(kOnLoadedRva, kOnLoadedPrologue, sizeof(kOnLoadedPrologue), &OnLoadedDetour, &g_original)) {
         Error("could not hook OnLoaded (wrong game build, or nEVR already hooks it)");
