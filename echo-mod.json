@@ -8,7 +8,7 @@
   "kind": "mod",
   "file": "AaliyahTablet.dll",
   "api": 5,
-  "capabilities": ["cosmetic"],
+  "capabilities": ["observes-only", "hooks-engine"]
   "target": "client",
   "visibility": "public",
   "requires": {
