@@ -2,10 +2,19 @@
   "schema": 1,
   "settings": {
     "store": { "kind": "args" },
-    "row": ["log_states"],
+    "row": ["tablet_color"],
     "fields": [
-      { "key": "log_states", "type": "bool", "label": "Log state changes", "default": true, "style": "switch",
-        "help": "Writes each change of the game's state to the mod's log." }
+      { "key": "tablet_color", "type": "choice", "label": "Tablet color", "default": "#2ad4d4",
+        "choices": [
+          { "value": "#ff8c1a", "label": "Orange" },
+          { "value": "#ff6fb5", "label": "Pink" },
+          { "value": "#e8697d", "label": "Rose" },
+          { "value": "#3a8fd9", "label": "Blue" },
+          { "value": "#2ad4d4", "label": "Cyan" },
+          { "value": "#9b5de5", "label": "Purple" },
+          { "value": "#b0102c", "label": "Crimson" },
+          { "value": "#3fb950", "label": "Green" }
+        ] }
     ]
   }
 }
