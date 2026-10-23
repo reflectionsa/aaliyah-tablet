@@ -1,0 +1,9 @@
+EXPORTS
+    NvrPluginGetInfo
+    NvrPluginGetApiVersion
+    NvrPluginGetCapabilities
+    NvrPluginInitEx
+    NvrPluginInit
+    NvrPluginOnFrame
+    NvrPluginOnGameStateChange
+    NvrPluginShutdown

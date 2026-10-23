@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "id": "example-mod",
+  "name": "Example mod",
+  "summary": "Logs the game's state changes. A starting point for your own mod.",
+  "author": "Your name",
+  "version": "0.1.0",
+  "kind": "mod",
+  "file": "ExampleMod.dll",
+  "api": 5,
+  "capabilities": ["observes-only"],
+  "target": "client",
+  "visibility": "public",
+  "requires": {
+    "nevr": ">=4.1.0",
+    "mods": []
+  },
+  "conflicts": [],
+  "license": "MIT",
+  "homepage": "",
+  "args": {},
+  "settings": "ExampleMod.plugin.json"
+}

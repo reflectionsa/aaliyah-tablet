@@ -1,0 +1,60 @@
+# Every push and pull request: build the mod, load it under Wine, check it. The DLL is kept as an
+# artifact to try out (Mods -> Add DLL in the launcher, with local plugins on).
+name: build
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends mingw-w64 cmake ninja-build wine wine64 python3
+          # The posix thread model: std::mutex and std::thread work (linked statically).
+          sudo update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
+          sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+
+      - name: Build, smoke test, check
+        run: tools/ci-build.sh
+
+      # The release check by the template's current rules (they may be newer than this repo's
+      # copy), on what a release of this commit would publish.
+      - name: Release check
+        run: |
+          file=$(python3 -c 'import json; print(json.load(open("echo-mod.json"))["file"])')
+          version=$(python3 -c 'import json; print(json.load(open("echo-mod.json"))["version"])')
+          python3 tools/package.py --dll "build/mingw/$file" --out build/dist
+          curl -fsSL -m 30 -o build/check_mod_current.py \
+            https://raw.githubusercontent.com/EchoTools/echo-mod-template-repo/main/tools/check_mod.py \
+            || cp tools/check_mod.py build/check_mod_current.py
+          python3 build/check_mod_current.py --published build/dist --tag "v$version"
+          if [[ -f tests/test_check_mod.py ]]; then python3 tests/test_check_mod.py; fi
+
+      - name: Name
+        id: name
+        run: |
+          python3 - >> "$GITHUB_OUTPUT" <<'PY'
+          import json
+          m = json.load(open("echo-mod.json"))
+          print("file=" + m["file"])
+          print("version=" + m["version"])
+          print("settings=" + (m.get("settings") if isinstance(m.get("settings"), str) else ""))
+          PY
+
+      # The DLL and its settings sheet (<Stem>.plugin.json): put both into the game's plugins folder.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.name.outputs.file }}-${{ steps.name.outputs.version }}-${{ github.sha }}
+          path: |
+            build/mingw/${{ steps.name.outputs.file }}
+            ${{ steps.name.outputs.settings }}

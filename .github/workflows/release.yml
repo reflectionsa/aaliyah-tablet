@@ -1,0 +1,57 @@
+# A tag v<version> (the version in echo-mod.json, a semantic version: semver.org) publishes a
+# GitHub release: the DLL (or the pack's zip), echo-mod.json with the checksums filled in, and
+# SHA256SUMS, with a build attestation that shows they were built here, from this tag.
+# A version with a prerelease part (1.2.0-beta.1) becomes a prerelease.
+#
+# Keep this file as it is: the launcher only takes releases that this workflow built.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends mingw-w64 cmake ninja-build wine wine64 python3
+          sudo update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
+          sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+
+      - name: Build, smoke test, check
+        run: tools/ci-build.sh "$GITHUB_REF_NAME"
+
+      - name: Package
+        run: |
+          file=$(python3 -c 'import json; print(json.load(open("echo-mod.json"))["file"])')
+          python3 tools/package.py --dll "build/mingw/$file"
+
+      # What the launcher's catalogue checks for every release, by the template's current rules
+      # (they may be newer than this repo's copy): a release it would refuse is never published.
+      - name: Check the release
+        run: |
+          curl -fsSL -m 30 -o build/check_mod_current.py \
+            https://raw.githubusercontent.com/EchoTools/echo-mod-template-repo/main/tools/check_mod.py \
+            || cp tools/check_mod.py build/check_mod_current.py
+          python3 build/check_mod_current.py --published dist --tag "$GITHUB_REF_NAME" --smoke build/smoke/smoke.json
+
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/*
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pre=$(python3 -c 'import json; print("--prerelease" if json.load(open("dist/echo-mod.json"))["prerelease"] else "")')
+          gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --generate-notes --verify-tag $pre

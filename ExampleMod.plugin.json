@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "settings": {
+    "store": { "kind": "args" },
+    "row": ["log_states"],
+    "fields": [
+      { "key": "log_states", "type": "bool", "label": "Log state changes", "default": true, "style": "switch",
+        "help": "Writes each change of the game's state to the mod's log." }
+    ]
+  }
+}
