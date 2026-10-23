@@ -1,12 +1,12 @@
 {
   "schema": 1,
-  "id": "example-mod",
-  "name": "Example mod",
-  "summary": "Logs the game's state changes. A starting point for your own mod.",
-  "author": "Your name",
+  "id": "aaliyah-tablet",
+  "name": "Aaliyah's Tablet",
+  "summary": "An in-game tablet with your colors, music, a goalie trainer and many more fun features!",
+  "author": "aaliyah",
   "version": "0.1.0",
   "kind": "mod",
-  "file": "ExampleMod.dll",
+  "file": "AaliyahTablet.dll",
   "api": 5,
   "capabilities": ["observes-only"],
   "target": "client",
@@ -19,5 +19,5 @@
   "license": "MIT",
   "homepage": "",
   "args": {},
-  "settings": "ExampleMod.plugin.json"
+  "settings": "AaliyahTablet.plugin.json"
 }
