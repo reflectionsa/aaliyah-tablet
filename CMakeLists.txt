@@ -67,7 +67,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 # MinHook for detours: off until the mod needs it (also add "hooks-engine" to capabilities).
-option(ECHO_MOD_MINHOOK "Build with MinHook for detours" OFF)
+option(ECHO_MOD_MINHOOK "Build with MinHook for detours" ON)
 
 add_library(mod SHARED
     src/mod.cpp
