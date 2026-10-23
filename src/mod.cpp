@@ -1,7 +1,7 @@
 // Aaliyah's tablet mod, step 1: LOOK before we paint.
 // When the game loads a screen ("canvas"), we write a list of its pieces to the log. We only
 // look; we change nothing. Needs two things first (see the notes with this file):
-//   1. echo-mod.json: capabilities must include "hooks-engine"
+//   1. echo-mod.json: capabilities must be ["hooks-engine"] on its own (the template refuses "observes-only" together with another one)
 //   2. the build must have ECHO_MOD_MINHOOK=ON (CMakeLists.txt: option(ECHO_MOD_MINHOOK ... ON))
 #include <windows.h>
 
@@ -38,11 +38,15 @@ constexpr size_t kElementType = 0x08;  // 1 text, 2 panel (a coloured box), 3 sp
 constexpr size_t kElementColor = 0x78;  // 4 floats red,green,blue,alpha, for panels (Doom build_tools_tab.py:66,
                                         // build_question_tab.py:35; Probing canvas_edit.py:113-114)
 
-// TODO (NOT in any source we have): which bytes of the screen's data hold its NAME. NOTES.md:75 says
-// the name is the first 8 bytes of the data file on disk (offset 0). We ASSUME the loaded data
-// starts the same way. If the log never says "TABLET FOUND", this guess is wrong: read the
-// "canvas" lines in the log and tell us what you see.
-constexpr size_t kResourceName = 0x00;
+// The screen's NAME lives in the game's "resource" object that instance +0x08 points to (revault
+// echovr.exe@0x1407216e0 CUICanvasInstance::Load stores the resource at instance+8; OnLoaded
+// 0x14071fc90 reads it back at the same place). On a resource the name hash is at +0x38 and the type
+// hash at +0x28 (nEVR runtime src/runtime/patch/resource_override.cpp:126-128). Offset 0 is a
+// pointer (a "vtable"), which is why the first version printed the same number for every screen.
+constexpr size_t kResourceName = 0x38;
+constexpr size_t kResourceType = 0x28;
+// A screen's type hash is the hash of "CUICanvasResource" (revault echovr.exe@0x1407216e0).
+constexpr uint64_t kCanvasType = 0x46222c5d2afeb3ffull;
 
 // TODO (fill in after the first run, from the "canvas" lines): the tablet's piece count.
 // Doom finds screens by their piece count (runtime.cpp:102). 0 = not used.
@@ -105,15 +109,17 @@ uint64_t OnLoadedDetour(void* self, uint64_t a, uint64_t b, uint64_t c) {
     const uint8_t* elements = nullptr;
     uint64_t count = 0;
     uint64_t name = 0;
+    uint64_t type = 0;
     bool haveName = false;
     if (Read(instance, kInstanceElements, &elements) && Read(instance, kInstanceCount, &count) &&
         Read(instance, kInstanceResource, &resource) && resource) {
-        haveName = Read(resource, kResourceName, &name);
+        haveName = Read(resource, kResourceName, &name) && Read(resource, kResourceType, &type);
     }
 
     if (elements && count > 0 && count < 100000) {
         // One line per screen so you can see what the game loads. Delete these two lines when you are done.
-        Log("canvas: name 0x%llx%s, %llu pieces", static_cast<unsigned long long>(name), haveName ? "" : " (unreadable)",
+        Log("canvas: name 0x%llx type 0x%llx%s, %llu pieces", static_cast<unsigned long long>(name),
+            static_cast<unsigned long long>(type), (haveName && type == kCanvasType) ? "" : " (type is not a canvas: check)",
             static_cast<unsigned long long>(count));
         bool isTablet = (haveName && name == kTabletCanvas) ||
                         (kTabletElementCount != 0 && count == kTabletElementCount);
