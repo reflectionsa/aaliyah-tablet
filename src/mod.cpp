@@ -122,7 +122,9 @@ void (*g_originalFire)(void*, void*, uint64_t, uint32_t) = nullptr;
 
 void FireDelegateDetour(void* self, void* behavior, uint64_t delegateSym, uint32_t flag) {
     g_originalFire(self, behavior, delegateSym, flag);
-    if (delegateSym == kDelegateIdle || delegateSym == kDelegateHover) return;
+   constexpr uint64_t kDelegatePress = 0x0c40e9da83afde25ull;
+    constexpr uint64_t kDelegateRelease = 0xe6d9364a71459d93ull;
+    if (delegateSym != kDelegatePress && delegateSym != kDelegateRelease) return;
     uint32_t element = 0;
     uint64_t symA = 0, symB = 0;
     Read(behavior, 0x44, &element);
