@@ -176,8 +176,10 @@ uint64_t OnLoadedDetour(void* self, uint64_t a, uint64_t b, uint64_t c) {
         Log("canvas: name 0x%llx type 0x%llx%s, %llu pieces", static_cast<unsigned long long>(name),
             static_cast<unsigned long long>(type), (haveName && type == kCanvasType) ? "" : " (type is not a canvas: check)",
             static_cast<unsigned long long>(count));
-        bool isTablet = (haveName && name == kTabletCanvas) ||
-                        (kTabletElementCount != 0 && count == kTabletElementCount);
+        bool isTablet = haveName && (name == kTabletCanvas || name == 0x51a76b94d9710516ULL ||
+                        name == 0x7d87d9944d1564dcULL || name == 0xfdea8ae53c32407eULL ||
+                        name == 0xfdea8aeb3a0f4862ULL || name == 0x703455302d126f3aULL ||
+                        name == 0x73fb81bebf1da3eeULL);
         if (isTablet) DumpCanvas(static_cast<unsigned>(count), elements);
     }
     return result;
