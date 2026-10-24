@@ -122,9 +122,13 @@ void (*g_originalFire)(void*, void*, uint64_t, uint32_t) = nullptr;
 
 void FireDelegateDetour(void* self, void* behavior, uint64_t delegateSym, uint32_t flag) {
     g_originalFire(self, behavior, delegateSym, flag);
-   constexpr uint64_t kDelegatePress = 0x0c40e9da83afde25ull;
-    constexpr uint64_t kDelegateRelease = 0xe6d9364a71459d93ull;
-    if (delegateSym != kDelegatePress && delegateSym != kDelegateRelease) return;
+    switch (delegateSym) {
+        case 0x27b7ebd0100cb25dull: case 0x0c40e9c29ebcc824ull:   // idle, hover
+        case 0x82dcb4c5e7327613ull: case 0x3a9c078ecfc8d37full:   // animation spam
+        case 0xb1035b97c57a24a6ull: case 0x131294bac4734f78ull:
+        case 0x47c40970d952e758ull:
+            return;
+    }
     uint32_t element = 0;
     uint64_t symA = 0, symB = 0;
     Read(behavior, 0x44, &element);
@@ -133,6 +137,7 @@ void FireDelegateDetour(void* self, void* behavior, uint64_t delegateSym, uint32
     Log("delegate 0x%llx element 0x%x symA 0x%llx symB 0x%llx", (unsigned long long)delegateSym,
         element, (unsigned long long)symA, (unsigned long long)symB);
 }
+
 
 // ---- the list ----
 
