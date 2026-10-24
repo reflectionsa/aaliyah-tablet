@@ -136,7 +136,7 @@ void DumpCanvas(unsigned count, uint8_t* elements) {
 
         // STEP 2: paint. Only a panel (type 2) whose four numbers look like a colour. In the step-1
         // log the tablet has exactly one: piece 6.
-        if (g_haveColor && type == 2) {
+        if (g_haveColor && (type == 2 || type == 3)) {
             uint8_t* at = elements + static_cast<size_t>(i) * kElementSize + kElementColor;
             if (!LooksLikeColor(c)) {
                 Log("piece %u: not painted, the numbers do not look like a colour", i);
