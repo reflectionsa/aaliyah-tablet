@@ -111,6 +111,26 @@ bool LooksLikeColor(const float* c) {
     }
     return true;
 }
+// CUIBehavior::FireDelegate: runs every time a UI behavior fires an event, like a button press.
+constexpr uintptr_t kFireDelegateRva = 0x7269f0;
+const uint8_t kFireDelegatePrologue[14] = {0x48, 0x89, 0x5c, 0x24, 0x10, 0x48, 0x89,
+                                           0x74, 0x24, 0x18, 0x55, 0x57, 0x41, 0x56};
+constexpr uint64_t kDelegateIdle = 0x27b7ebd0100cb25dull;   // fires constantly, skip
+constexpr uint64_t kDelegateHover = 0x0c40e9c29ebcc824ull;  // fires constantly, skip
+
+void (*g_originalFire)(void*, void*, uint64_t, uint32_t) = nullptr;
+
+void FireDelegateDetour(void* self, void* behavior, uint64_t delegateSym, uint32_t flag) {
+    g_originalFire(self, behavior, delegateSym, flag);
+    if (delegateSym == kDelegateIdle || delegateSym == kDelegateHover) return;
+    uint32_t element = 0;
+    uint64_t symA = 0, symB = 0;
+    Read(behavior, 0x44, &element);
+    Read(behavior, 0x28, &symA);
+    Read(behavior, 0x38, &symB);
+    Log("delegate 0x%llx element 0x%x symA 0x%llx symB 0x%llx", (unsigned long long)delegateSym,
+        element, (unsigned long long)symA, (unsigned long long)symB);
+}
 
 // ---- the list ----
 
@@ -202,7 +222,13 @@ bool Start(const NvrGameContext*) {
         Error("could not hook OnLoaded (wrong game build, or nEVR already hooks it)");
         return false;
     }
-    Log("watching screens as they load");
+   Log("watching screens as they load");
+    if (!hooks::Hook(kFireDelegateRva, kFireDelegatePrologue, sizeof(kFireDelegatePrologue),
+                     &FireDelegateDetour, &g_originalFire)) {
+        Warn("could not hook FireDelegate");
+    } else {
+        Log("watching button presses");
+    }
     return true;
 }
 
