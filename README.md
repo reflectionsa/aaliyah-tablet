@@ -1,4 +1,13 @@
-# aaliyah-tablet
+# Aaliyah-Tablet
+
+## Credits
+
+- **babs** (GitHub: nmdurkee) - code for the goalie trainer, and *EchoVR Personal Disc Everywhere*, the community mod this project's tablet pages build on. Its files are not included here.
+- **tomski** - the idea of matchmaking from the tablet.
+- **he_is_the_cat** - music code for the in-game Music tab.
+- **Xenomega** and fork maintainers - *EchoRelay*, community servers for Echo VR.
+- **EchoTools** - *evrFileTools*, Echo VR package tooling.
+- Echo VR is made by Ready At Dawn. All game assets belong to their owners.
 
 An unofficial fan project that extends the in-game wrist tablet in **Echo VR** (Windows PC). It adds new pages for music, training, lobby tools, matchmaking and Spark, and restyles the tablet.
 
@@ -10,46 +19,37 @@ An unofficial fan project that extends the in-game wrist tablet in **Echo VR** (
 
 ## Planned tablet design
 
-Bottom bar, left to right: **Music**, Home, List, Social, Friends, **Tools**. Home, List, Social and Friends are the original game pages. Music and Tools are new.
+Bottom bar, left to right: **Music**, Home, List, **Party**, **Friends**, **Tools**. Home and List are original game pages. The rest are new or changed.
 
 ### Music
-- Source, song title and artist
-- Progress bar, Prev, Pause/Play and Next
-- Vol - and Vol + buttons
+- Album art, plus song, artist and album
+- Progress bar, Prev, Pause/Play, and Vol - / Vol + buttons
+- Option to play through the Echo VR speakers
 
-### Tools (three tabs)
-- **Goalie** - 60-second training session with Start/Stop and time, saves, goals against, save rate and streak.
-- **Kick** - lobby player list with a select-then-confirm kick, paging, Refresh and Reconnect.
-- **Matchmaking** - Echo Arena queue with status, Find Match, Auto Lobby, Private Match and Matches Today.
+### Tools (five tabs)
+- **Goalie trainer** - 60-second session with a timer bar, a shot history, and saves, goals against, save rate and streak.
+- **Kick** - lobby list showing each player's Discord username. Kick buttons only appear for guild moderators, based on their role in each guild. Select-then-confirm, paging, Refresh and Reconnect.
+- **Matchmaking** - Echo Arena queue with Find Match, Auto Lobby, Private Match and Matches Today. It also tracks early quits per day and warns you when one more would lock matchmaking.
+- **Spark** - public matches and private rounds: your server, network (average ping, loss %, worst ping), previous goals, and whether replays are on for public and private matches. Private intermission: previous rounds, location, average ping and replays. Private ready-up: preset choice, Ready up, server location and replays. On your wrist, the personal disc icon stays but shows your throwing speed.
+- **Color** - pick a tablet color and equip it. The whole tablet, including Spark, follows the color.
 
-### Spark tab
-- Shows which server you are on
-- Previous rounds
-- Ready up
-- Choose which preset to use for private matches
+### Friends
+Your friend list with each friend's status: online, offline, in menu, in lobby, or in an Arena or Combat match (public or private). For matches it shows how many players are in it, up to 8, not counting spectators.
 
-### More features
-- **Tablet colors** - change the tablet's color theme.
-- **Live counts** - how many people are online and how many matches are being played. The data source isn't decided yet.
-- **Disc speed readout** - when the personal disc can't be used, its icon stays on the tablet but shows your disc speed instead. The speed comes from Spark.
+### Party
+Up to 4 people. The party leader has a crown in your tablet color.
 
 ## Roadmap
 
 - [ ] Music tab in the game
-- [ ] Tools tab: Goalie, Kick, Matchmaking
-- [ ] Tablet color themes
+- [ ] Tools tab: Goalie trainer, Kick, Matchmaking, Spark, Color
+- [ ] Discord usernames and moderator roles for Kick
+- [ ] Early quit tracking
+- [ ] Friends tab with Arena and Combat statuses
+- [ ] Party tab
 - [ ] Live online and match counts
-- [ ] Spark tab (server, previous rounds, ready, private presets)
-- [ ] Disc speed readout in place of the personal disc icon
-
-## Credits
-
-- **babs** (GitHub: nmdurkee) - code for the goalie trainer, and *EchoVR Personal Disc Everywhere*, the community mod this project's tablet pages build on. Its files are not included here.
-- **tomski** - the idea of matchmaking from the tablet.
-- **he_is_the_cat** - music code for the in-game Music tab.
-- **Xenomega** and fork maintainers - *EchoRelay*, community servers for Echo VR.
-- **EchoTools** - *evrFileTools*, Echo VR package tooling.
-- Echo VR is made by Ready At Dawn. All game assets belong to their owners.
+- [ ] Throwing speed on the wrist in place of the personal disc icon
+- [ ] Music through the Echo VR speakers
 
 ## License
 
