@@ -179,7 +179,7 @@ uint64_t OnLoadedDetour(void* self, uint64_t a, uint64_t b, uint64_t c) {
         bool isTablet = haveName && (name == kTabletCanvas || name == 0x51a76b94d9710516ULL ||
                         name == 0x7d87d9944d1564dcULL || name == 0xfdea8ae53c32407eULL ||
                         name == 0xfdea8aeb3a0f4862ULL || name == 0x703455302d126f3aULL ||
-                        name == 0x73fb81bebf1da3eeULL);
+                        name == 0x73fb81bebf1da3eeULL || name == 0x30b4ca0bacbfd442ULL);
         if (isTablet) DumpCanvas(static_cast<unsigned>(count), elements);
     }
     return result;
